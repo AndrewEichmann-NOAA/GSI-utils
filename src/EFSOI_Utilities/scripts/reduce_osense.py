@@ -42,6 +42,8 @@ for cycle in cycles:
     (convdata, satdata, cdate) = osense.read_osense(filename)
 
     osensedata = osense.consolidate(convdata, satdata)
+ 
+    osensedata = osense.add_channels(osensedata,'global_satinfo.txt')
 
     outfilename = os.path.join(outdir, 'osense_' + CDATE + '.pkl')
     print("saving file ", outfilename)
