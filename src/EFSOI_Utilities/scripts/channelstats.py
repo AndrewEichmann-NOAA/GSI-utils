@@ -5,7 +5,7 @@ import os.path
 import argparse
 import osense
 import pandas as pd
-import sys
+#import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -26,7 +26,6 @@ indir = args.indir
 outdir = args.outdir
 
 grouping = 'chan'
-#grouping = 'detailed_source'
 norms = ['osense_kin', 'osense_dry', 'osense_moist']
 moments = ['mean impact', 'total impact', 'obs count']
 
@@ -36,6 +35,7 @@ allthemoments = {}
 
 print('running from', firstcycle, 'to', lastcycle)
 
+# read in all osense data for each cycle and do per-cycle stats
 for cycle in cycles:
 
     CDATE = cycle.strftime("%Y%m%d%H")
@@ -52,7 +52,6 @@ for cycle in cycles:
 
     columns = [grouping] + norms
 
-
 # get the obs with satellite data
     sats = osensedata['source'].loc[osensedata['indxsat'] > 0]
     sources = sats.unique()
@@ -64,6 +63,10 @@ for cycle in cycles:
         meanimpacts = osensebysource.groupby(grouping).mean()
         sumimpacts = osensebysource.groupby(grouping).sum()
         obcounts = osensebysource.groupby(grouping).count()
+        # the channels keep getting converted to floats, so fix it here
+        meanimpacts.index=meanimpacts.index.astype('int64')
+        sumimpacts.index=sumimpacts.index.astype('int64')
+        obcounts.index=obcounts.index.astype('int64')
 
         mymoments = {}
 
@@ -76,6 +79,7 @@ for cycle in cycles:
 
         allthemoments[source] = mymoments
 
+# save for later use
     outfilename = os.path.join(outdir, 'osensestatschans_' + CDATE + '.pkl')
     print("saving file ", outfilename)
     with open(outfilename, 'wb') as outfile:
@@ -94,7 +98,7 @@ for source in sources:
         sourcedict[norm] = normdict
     comprehensive[source] = sourcedict
 
-# collect all moments for each norm and each instrument
+# collect all per-cycle stats for each norm and each instrument
 for cycle in cycles:
 
     CDATE = cycle.strftime("%Y%m%d%H")
@@ -137,4 +141,12 @@ for source in sources:
         sourcedict[norm] = normdict
     aggregated[source] = sourcedict
     
-    
+outfilename = os.path.join(outdir, 'osensestats_channels_all.pkl')
+print("saving file ", outfilename)
+with open(outfilename, 'wb') as outfile:
+    dump([{'exp': exp, 'firstcycle':firstcycle, 'lastcycle':lastcycle, 'stats': aggregated}], outfile)
+
+
+
+
+
