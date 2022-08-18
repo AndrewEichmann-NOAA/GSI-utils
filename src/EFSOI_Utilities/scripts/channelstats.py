@@ -50,6 +50,8 @@ for cycle in cycles:
     with open(infilename, 'rb') as infile:
         [exp, cdate, osensedata] = load(infile)
 
+    osensedata=osensedata.loc[osensedata.assimilated==1]
+
     columns = [grouping] + norms
 
 # get the obs with satellite data
